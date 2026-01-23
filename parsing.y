@@ -11,6 +11,7 @@
 %union {int ival;
         char *sval;
         astNode *node;
+        vector<astNode*> *slist;
 }
 
 %token <sval> ID
@@ -23,6 +24,8 @@
 
 %type <node> condition factor term expr
 %type <node> assignment declaration return_statement print_statement
+%type <node> statement block
+%type <slist> statement_list
 
 %start statement_list
 
@@ -44,21 +47,21 @@ condition : expr '<'  expr  { $$ = createRExpr($1, $3, lt); }
           | expr NE   expr  { $$ = createRExpr($1, $3, neq); }
           ;
 
-block: '{' statement_list '}' ;
+block: '{' statement_list '}' { $$ = createBlock($2); } ;
 
-statement_list: statement_list statement
-              | statement
+statement_list: statement_list statement    {   $1->push_back($2); $$ = $1; }
+              | statement                   {   $$ = new vector<astNode*>(); $$->push_back($1);}
               ;
 
-statement  : WHILE '(' condition ')' statement
-           | IF '(' condition ')' statement %prec IFX
-           | IF '(' condition ')' statement ELSE statement
-           | declaration
-           | return_statement
-           | print_statement
-           | assignment ';'
-           | expr ';'
-           | block
+statement  : WHILE '(' condition ')' statement              { $$ = createWhile($3, $5); }
+           | IF '(' condition ')' statement %prec IFX       { $$ = createIf($3, $5, NULL); }
+           | IF '(' condition ')' statement ELSE statement  { $$ = createIf($3, $5, $7); }
+           | declaration        { $$ = $1; }
+           | return_statement   { $$ = $1; }
+           | print_statement    { $$ = $1; }
+           | assignment ';'     { $$ = $1; }
+           | expr ';'           { $$ = $1; }
+           | block              { $$ = $1; }
            ;
 
 expr : expr '+' term            { $$ = createBExpr($1, $3, add); }
