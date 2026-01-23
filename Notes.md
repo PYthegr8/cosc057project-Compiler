@@ -40,3 +40,9 @@ Grammar rules are built using the terminals provided by Lex.
 * **Binary Expressions:** Usually follow the pattern `expression OP expression`.
 * **Assignments:** Can be a single term or a complex expression.
 * *Example:* `assignment : ID '=' expression`
+
+## Coding Notes
+1. An expression is terms added or subtracted 
+2. A term is factors multiplied or divided 
+3. A factor is an identifier or a number
+4. A block is just a group of statements(statement list) wrapped in braces

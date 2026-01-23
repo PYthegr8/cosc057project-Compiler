@@ -17,6 +17,8 @@
 [0-9]+		            {return NUM;}
 
 [ \t\n]+               ;
+.   { return yytext[0]; }
+
 
 
 
