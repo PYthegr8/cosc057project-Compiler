@@ -10,6 +10,8 @@
 %token ID NUM
 %token WHILE IF ELSE PRINT INT EXTERN VOID RETURN READ
 %token LE GE EQ NE
+%nonassoc IFX
+%nonassoc ELSE
 %start statement_list
 
 %%
@@ -31,7 +33,7 @@ statement_list: statement_list statement
               ;
 
 statement  : WHILE '(' condition ')' statement
-           | IF '(' condition ')' statement
+           | IF '(' condition ')' statement %prec IFX
            | IF '(' condition ')' statement ELSE statement
            | assignment ';'
            | expr ';'

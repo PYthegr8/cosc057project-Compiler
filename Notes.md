@@ -46,3 +46,7 @@ Grammar rules are built using the terminals provided by Lex.
 2. A term is factors multiplied or divided 
 3. A factor is an identifier or a number
 4. A block is just a group of statements(statement list) wrapped in braces
+5. A shift/reduce conflict means “the grammar lets me finish now or keep going.”
+   %prec and %nonassoc are how we tell the parser which choice we intend. so the order matters (later = higher precedence). I want ELSE higher than IFX, so put:
+%nonassoc IFX
+%nonassoc ELSE
