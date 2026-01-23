@@ -17,13 +17,13 @@
 [0-9]+		            {return NUM;}
 
 [ \t\n]+               ;
-.   { return yytext[0]; }
 
+"<="                    { return LE; }
+">="                    { return GE; }
+"=="                    { return EQ; }
+"!="                    { return NE; }
 
-
-
-
-
+.                       { return yytext[0]; }
 
 
 %%

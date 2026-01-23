@@ -9,21 +9,31 @@
 
 %token ID NUM
 %token WHILE IF ELSE PRINT INT EXTERN VOID RETURN READ
-
+%token LE GE EQ NE
 %start statement_list
 
 %%
 
 assignment : ID '=' expr ;
 
+condition : expr '<'  expr
+          | expr '>'  expr
+          | expr LE   expr
+          | expr GE   expr
+          | expr EQ   expr
+          | expr NE   expr
+          ;
 
-block: '{' statement_list '}'
+block: '{' statement_list '}' ;
 
 statement_list: statement_list statement
               | statement
               ;
 
-statement  : assignment ';'
+statement  : WHILE '(' condition ')' statement
+           | IF '(' condition ')' statement
+           | IF '(' condition ')' statement ELSE statement
+           | assignment ';'
            | expr ';'
            | block
            ;
