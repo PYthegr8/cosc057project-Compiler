@@ -1,21 +1,22 @@
-// trying to tokenize: symbols(braces, assignment) operators, numbers. no recursive definitions
-
 %{
 	#include <stdio.h>
-	#include "y.tab.h"
+	#include "parsing.tab.h"
 %}
 
 %%
-[a-zA-Z]+	{ return NAME;}
-[0-9]+		{ return NUM;}
-'while'     {return WHILE;}
-'if'        {return IF;}
-'else'      {return ELSE;}
-'print'     {return PRINT;}
-'int'       {return INT;}
-'extern'    {return EXTERN;}
-'void'      {return VOID;}
-[ \t\n+]
+"while"                 {return WHILE;}
+"if"                    {return IF;}
+"else"                  {return ELSE;}
+"print"                 {return PRINT;}
+"int"                   {return INT;}
+"extern"                {return EXTERN;}
+"void"                  {return VOID;}
+"return"                {return RETURN;}
+"read"                  {return READ;}
+[a-zA-Z][a-zA-Z0-9]*	{return ID;}
+[0-9]+		            {return NUM;}
+
+[ \t\n]+               ;
 
 
 

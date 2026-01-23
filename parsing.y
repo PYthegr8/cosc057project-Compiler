@@ -1,32 +1,24 @@
-#include <stdio.h>
-#build grammar and AST tree this week
-#do semantic analysis
-
-{%
-extern int yylex();
-extern int yylex_destroy();
-extern int yywrap();
-int yyerror(char *);
-extern FILE *yyin;
+%{ #include <stdio.h>
+    extern int yylex();
+    extern int yylex_destroy();
+    extern int yywrap();
+    int yyerror(char *);
+    extern FILE *yyin;
 %}
 
-%token NAME NUM
+%token ID NUM
+%token WHILE IF ELSE PRINT INT EXTERN VOID RETURN READ
 %start expr
 
-
 %%
-expr :     term '+'  term
-		 | term '-'	 term
-		 | term '*'	 term
-		 | term '/' term
-		 | term {$$ = $1
-term : NUM
-type: INT
-declaration: type NAME ';'
-statement:
-block:
+expr : expr '+' term
+     | expr '-' term
+     | term
+     ;
 
-// describing more grammar rules
+term : ID
+     | NUM
+     ;
 
 %%
 

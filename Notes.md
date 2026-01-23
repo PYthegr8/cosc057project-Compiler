@@ -29,7 +29,7 @@ The **Lex** file identifies "tokens" (words) in the source code using **Regular 
 In Yacc actions, you access the values of the tokens using the `$` syntax:
 
 * `$1`, `$2`, `$3` ... represent the values of the symbols in the rule.
-* `$$` represents the value of the entire expression being evaluated.
+* `$$` represents the value of the ent ire expression being evaluated.
 
 ---
 
