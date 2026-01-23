@@ -18,6 +18,12 @@
 
 assignment : ID '=' expr ;
 
+declaration: INT ID ';' ;
+
+return_statement : RETURN '(' expr ')' ';' ;
+
+print_statement: PRINT '(' expr ')' ';' ;
+
 condition : expr '<'  expr
           | expr '>'  expr
           | expr LE   expr
@@ -35,6 +41,9 @@ statement_list: statement_list statement
 statement  : WHILE '(' condition ')' statement
            | IF '(' condition ')' statement %prec IFX
            | IF '(' condition ')' statement ELSE statement
+           | declaration
+           | return_statement
+           | print_statement
            | assignment ';'
            | expr ';'
            | block
@@ -52,6 +61,7 @@ term   : term '*' factor
 
 factor : ID
      | NUM
+     | READ '(' ')'
      | '(' expr ')'
      ;
 
