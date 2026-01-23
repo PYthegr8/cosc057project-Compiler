@@ -50,3 +50,6 @@ Grammar rules are built using the terminals provided by Lex.
    %prec and %nonassoc are how we tell the parser which choice we intend. so the order matters (later = higher precedence). I want ELSE higher than IFX, so put:
 %nonassoc IFX
 %nonassoc ELSE
+6. %union defines all possible semantic value types 
+7. %token / %type tell yacc which type each symbol uses 
+8. $n and $$ are typed views into that union . AST construction only works because of this typing

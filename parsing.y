@@ -1,17 +1,28 @@
-%{ #include <stdio.h>
+%{  #include <stdio.h>
+    #include "ast.h"
     extern int yylex();
     extern int yylex_destroy();
     extern int yywrap();
     extern int yyparse(void);
-    int yyerror(char *);
+    int yyerror(const char *);
     extern FILE *yyin;
 %}
 
-%token ID NUM
+%union {int ival;
+        char *sval;
+        astNode *node;
+}
+
+%token <sval> ID
+%token <ival> NUM
 %token WHILE IF ELSE PRINT INT EXTERN VOID RETURN READ
 %token LE GE EQ NE
+
 %nonassoc IFX
 %nonassoc ELSE
+
+%type <node> condition factor term expr
+
 %start statement_list
 
 %%
@@ -24,12 +35,12 @@ return_statement : RETURN '(' expr ')' ';' ;
 
 print_statement: PRINT '(' expr ')' ';' ;
 
-condition : expr '<'  expr
-          | expr '>'  expr
-          | expr LE   expr
-          | expr GE   expr
-          | expr EQ   expr
-          | expr NE   expr
+condition : expr '<'  expr  { $$ = createRExpr($1, $3, lt); }
+          | expr '>'  expr  { $$ = createRExpr($1, $3, gt); }
+          | expr LE   expr  { $$ = createRExpr($1, $3, le); }
+          | expr GE   expr  { $$ = createRExpr($1, $3, ge); }
+          | expr EQ   expr  { $$ = createRExpr($1, $3, eq); }
+          | expr NE   expr  { $$ = createRExpr($1, $3, neq); }
           ;
 
 block: '{' statement_list '}' ;
@@ -49,25 +60,25 @@ statement  : WHILE '(' condition ')' statement
            | block
            ;
 
-expr : expr '+' term
-     | expr '-' term
-     | term
+expr : expr '+' term            { $$ = createBExpr($1, $3, add); }
+     | expr '-' term            { $$ = createBExpr($1, $3, sub); }
+     | term                     { $$ = $1; }
      ;
 
-term   : term '*' factor
-       | term '/' factor
-       | factor
+term   : term '*' factor        { $$ = createBExpr($1, $3, mul); }
+       | term '/' factor        { $$ = createBExpr($1, $3, divide); }
+       | factor                 { $$ = $1; }
        ;
 
-factor : ID
-     | NUM
-     | READ '(' ')'
-     | '(' expr ')'
-     ;
+factor : ID                     {   $$ = createVar($1);  }
+         | NUM                  {   $$ = createCnst($1); }
+         | READ '(' ')'         {   $$ = createCall("read", NULL); }
+         | '(' expr ')'         {   $$ = $2; }
+         ;
 
 %%
 
-int yyerror(char *s){
+int yyerror(const char *s){
 	fprintf(stderr,"%s\n", s);
 	return 0;
 }
