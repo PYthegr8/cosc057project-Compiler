@@ -1,0 +1,21 @@
+# build artifacts
+*.o
+*.out
+a.out
+
+# lex/yacc generated files
+lex.yy.c
+y.tab.c
+y.tab.h
+parser.tab.c
+parser.tab.h
+*.output
+
+# executables
+minic
+parser
+compiler
+
+# editor junk
+.vscode/
+.idea/
