@@ -22,18 +22,19 @@
 %nonassoc ELSE
 
 %type <node> condition factor term expr
+%type <node> assignment declaration return_statement print_statement
 
 %start statement_list
 
 %%
 
-assignment : ID '=' expr ;
+assignment : ID '=' expr  { $$ = createAsgn(createVar($1), $3); } ;
 
-declaration: INT ID ';' ;
+declaration: INT ID ';'   { $$ = createDecl($2); } ;
 
-return_statement : RETURN '(' expr ')' ';' ;
+return_statement : RETURN '(' expr ')' ';'  { $$ = createRet($3); } ;
 
-print_statement: PRINT '(' expr ')' ';' ;
+print_statement: PRINT '(' expr ')' ';'  { $$ = createCall("print", $3); } ;
 
 condition : expr '<'  expr  { $$ = createRExpr($1, $3, lt); }
           | expr '>'  expr  { $$ = createRExpr($1, $3, gt); }
