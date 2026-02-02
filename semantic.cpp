@@ -31,3 +31,41 @@ static void exitScope() {
         scope_stack.pop_back();
     }
 }
+
+
+/* Declare a name in the current scope. */
+static void declareName(const char *name) {
+    if (name == nullptr) {
+        return;
+    }
+    if (scope_stack.empty()) {
+        enterScope();
+    }
+    std::unordered_set<std::string> &current = scope_stack.back();
+    if (current.find(name) != current.end()) {
+        reportDuplicate(name);
+        return;
+    }
+    current.insert(name);
+}
+
+/* Check that a name is declared in some scope. */
+static void useName(const char *name) {
+    int i;
+
+    if (name == nullptr) {
+        return;
+    }
+    if (scope_stack.empty()) {
+        reportUndeclared(name);
+        return;
+    }
+    for (i = (int)scope_stack.size() - 1; i >= 0; --i) {
+        if (scope_stack[i].find(name) != scope_stack[i].end()) {
+            return;
+        }
+    }
+    reportUndeclared(name);
+}
+
+static void checkNode(astNode *node);
