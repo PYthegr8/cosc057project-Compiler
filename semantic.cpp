@@ -133,3 +133,56 @@ static void checkStatement(astNode *node) {
     }
 }
 
+/* Traverse an AST node */
+static void checkNode(astNode *node) {
+    if (node == nullptr) {
+        return;
+    }
+    switch (node->type) {
+    case ast_prog:
+        checkNode(node->prog.func);
+        break;
+    case ast_func:
+        enterScope();
+        if (node->func.param != nullptr && node->func.param->type == ast_var) {
+            declareName(node->func.param->var.name);
+        } else if (node->func.param != nullptr) {
+            checkNode(node->func.param);
+        }
+        checkBlockStatements(node->func.body);
+        exitScope();
+        break;
+    case ast_stmt:
+        checkStatement(node);
+        break;
+    case ast_var:
+        useName(node->var.name);
+        break;
+    case ast_cnst:
+        break;
+    case ast_rexpr:
+        checkNode(node->rexpr.lhs);
+        checkNode(node->rexpr.rhs);
+        break;
+    case ast_bexpr:
+        checkNode(node->bexpr.lhs);
+        checkNode(node->bexpr.rhs);
+        break;
+    case ast_uexpr:
+        checkNode(node->uexpr.expr);
+        break;
+    case ast_extern:
+        break;
+    default:
+        break;
+    }
+}
+
+int SemanticAnalysis(astNode *root) {
+    scope_stack.clear();
+    error_count = 0;
+    checkNode(root);
+    return (error_count > 0) ? 1 : 0;
+}
+
+
