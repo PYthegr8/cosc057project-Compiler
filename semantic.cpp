@@ -69,3 +69,67 @@ static void useName(const char *name) {
 }
 
 static void checkNode(astNode *node);
+
+/* Walk all statements inside a block. */
+static void checkBlockStatements(astNode *node) {
+    std::vector<astNode *> *list_ptr;
+    size_t i;
+
+    if (node == nullptr) {
+        return;
+    }
+    if (node->type != ast_stmt || node->stmt.type != ast_block) {
+        checkNode(node);
+        return;
+    }
+    list_ptr = node->stmt.block.stmt_list;
+    if (list_ptr == nullptr) {
+        return;
+    }
+    for (i = 0; i < list_ptr->size(); ++i) {
+        checkNode((*list_ptr)[i]);
+    }
+}
+
+/* Check a statement node and its children. */
+static void checkStatement(astNode *node) {
+    if (node == nullptr || node->type != ast_stmt) {
+        return;
+    }
+    switch (node->stmt.type) {
+    case ast_call:
+        if (node->stmt.call.param != nullptr) {
+            checkNode(node->stmt.call.param);
+        }
+        break;
+    case ast_ret:
+        checkNode(node->stmt.ret.expr);
+        break;
+    case ast_block:
+        enterScope();
+        checkBlockStatements(node);
+        exitScope();
+        break;
+    case ast_while:
+        checkNode(node->stmt.whilen.cond);
+        checkNode(node->stmt.whilen.body);
+        break;
+    case ast_if:
+        checkNode(node->stmt.ifn.cond);
+        checkNode(node->stmt.ifn.if_body);
+        if (node->stmt.ifn.else_body != nullptr) {
+            checkNode(node->stmt.ifn.else_body);
+        }
+        break;
+    case ast_asgn:
+        checkNode(node->stmt.asgn.lhs);
+        checkNode(node->stmt.asgn.rhs);
+        break;
+    case ast_decl:
+        declareName(node->stmt.decl.name);
+        break;
+    default:
+        break;
+    }
+}
+
