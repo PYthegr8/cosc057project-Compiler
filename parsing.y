@@ -1,5 +1,7 @@
 %{  #include <stdio.h>
     #include "ast.h"
+    #include "semantic.h"
+    astNode* root = NULL;
     extern int yylex();
     extern int yylex_destroy();
     extern int yywrap();
@@ -32,7 +34,7 @@
 
 %%
 
-program : extern extern func  { $$ = createProg($1, $2, $3); } ;
+program : extern extern func  { root = createProg($1, $2, $3);   $$ = root; } ;
 
 extern
     : EXTERN VOID PRINT '(' INT ')' ';'   { $$ = createExtern("print"); }
@@ -109,6 +111,14 @@ int main(int argc, char* argv[]){
 			}
 		}
 		yyparse();
+
+		if (root != NULL) {
+                if (SemanticAnalysis(root) != 0) {
+                    fprintf(stderr, "Semantic analysis failed.\n");
+                    return 1;
+                }
+        }
+
 		if (argc == 2) fclose(yyin);
 		yylex_destroy();
 		return 0;
