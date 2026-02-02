@@ -53,3 +53,9 @@ Grammar rules are built using the terminals provided by Lex.
 6. %union defines all possible semantic value types 
 7. %token / %type tell yacc which type each symbol uses 
 8. $n and $$ are typed views into that union . AST construction only works because of this typing
+
+## Semantic Analysis Notes
+my current plan is to use a stack to keep track of the scope of variables. i passed the root node of the AST to the semantic analyzer and it will traverse the tree and check for errors. 
+i provided the root of the ast to the funciton in the yacc file
+I'm thinking my symbol table should be a hashed structure , maybe a map or a set. I don't think i need a set since I'm not storing values so i can use a set
+My stack will be a vector of those symbol tables sets. 

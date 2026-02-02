@@ -50,7 +50,7 @@ assignment : ID '=' expr  { $$ = createAsgn(createVar($1), $3); } ;
 
 declaration: INT ID ';'   { $$ = createDecl($2); } ;
 
-return_statement : RETURN '(' expr ')' ';'  { $$ = createRet($3); } ;
+return_statement : RETURN expr ';'  { $$ = createRet($2); } ;
 
 print_statement: PRINT '(' expr ')' ';'  { $$ = createCall("print", $3); } ;
 
