@@ -62,3 +62,8 @@ My stack will be a vector of those symbol tables sets.
 1. a scope is created for the function itself and for every block surrounded by {}. when i see a declaration, i only look at the current scope. if the variable name is already there, that’s an error because it’s a duplicate declaration in the same scope. otherwise i add it to the current scope. when i see a variable being used, i search from the top of the scope stack downward. if the variable exists in any scope, it’s valid. if it doesn’t exist anywhere, then it’s an undeclared variable error.
 2. i want one general traversal function that looks at the type of each node and decides what to do next. for statements specifically, i want a separate “check statement” step. if the statement is a block, i push a new scope, process the statements inside in order, and then pop the scope when the block ends. if it’s a declaration, i treat it as introducing a new variable into the current scope. if it’s an assignment, i check both the left and right sides for variable usage. for conditionals and loops, i check the condition first and then check the body, which may or may not be a block.
 3. when i start analyzing a function, i create a new scope and insert the parameter name before walking the function body. that way, the parameter behaves like a normal variable that’s visible everywhere inside the function.
+
+## Testing Notes
+1. run `make clean`
+2. run `make`
+3. run `./parser semantic_analysis_tests/the test.c`
