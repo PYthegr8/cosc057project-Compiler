@@ -1,7 +1,7 @@
 /*
 * runOptimizations.cpp
  *
- * Loads an LLVM IR file, runs local optimizations on each function,
+ * Loads an LLVM IR file, runs optimizations on each function,
  * and prints the optimized IR.
  */
 

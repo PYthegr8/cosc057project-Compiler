@@ -152,7 +152,7 @@ static void computeGenKill(
 }
 
 /*
- * Computes IN and OUT sets for all basic blocks using iterative fixpoint.
+ * Computes IN and OUT sets for all basic blocks.
  */
 static void computeInOut(
     const std::vector<LLVMBasicBlockRef>& blocks,

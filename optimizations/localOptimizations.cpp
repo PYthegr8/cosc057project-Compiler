@@ -5,6 +5,7 @@
  * Passes in this file:
  *  1) Constant Folding for integer add sub mul with constant operands
  *  2) Dead Code Elimination for unused non side effect instructions
+ *  3) Common Subexpression Elimination for duplicate instructions
  */
 
 #include <vector>
@@ -21,7 +22,6 @@ static bool isSideEffect(LLVMValueRef I) {
   if (op == LLVMStore) return true;
   if (op == LLVMCall) return true;
   if (op == LLVMAlloca) return true;
-  if (op == LLVMLoad) return true;
   if (LLVMIsATerminatorInst(I)) return true;
 
   return false;
