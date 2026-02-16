@@ -12,7 +12,10 @@
 #include <llvm-c/IRReader.h>
 #include <llvm-c/Support.h>
 
-extern bool runLocalOptimizations(LLVMValueRef function);
+extern bool constantFolding(LLVMValueRef function);
+extern bool commonSubexpressionElimination(LLVMValueRef function);
+extern bool deadCodeElimination(LLVMValueRef function);
+extern bool constantPropagation(LLVMValueRef function);
 
 int main(int argc, char** argv) {
     if (argc < 2) {
