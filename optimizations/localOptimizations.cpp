@@ -180,16 +180,3 @@ bool deadCodeElimination(LLVMValueRef function) {
 
   return changed;
 }
-
-/*
- * Runs local optimizations on a function.
- */
-bool runLocalOptimizations(LLVMValueRef function) {
-  bool changed = false;
-
-  changed |= constantFolding(function);
-  changed |= commonSubexpressionElimination(function);
-  changed |= deadCodeElimination(function);
-
-  return changed;
-}

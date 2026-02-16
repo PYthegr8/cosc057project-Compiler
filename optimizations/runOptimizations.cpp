@@ -45,7 +45,21 @@ int main(int argc, char** argv) {
          function = LLVMGetNextFunction(function)) {
 
         if (LLVMCountBasicBlocks(function) == 0) continue;
-        runLocalOptimizations(function);
+
+        // Global fixpoint: constant propagation followed by constant folding
+        while (true) {
+            bool changed = false;
+
+            changed |= constantPropagation(function);
+            changed |= constantFolding(function);
+            changed |= deadCodeElimination(function);
+
+            if (!changed) break;
+        }
+
+        // Local cleanup
+        commonSubexpressionElimination(function);
+        deadCodeElimination(function);
          }
 
     // Print optimized module

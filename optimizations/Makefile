@@ -2,9 +2,9 @@ LLVMCODE = optimizer
 IN = test.ll
 OUT = test_opt.ll
 
-$(LLVMCODE): runOptimizations.cpp localOptimizations.cpp
+$(LLVMCODE): runOptimizations.cpp localOptimizations.cpp globalOptimizations.cpp
 	clang++ -g `llvm-config-17 --cxxflags --ldflags --libs core irreader support` \
-	runOptimizations.cpp localOptimizations.cpp -o $(LLVMCODE)
+	runOptimizations.cpp localOptimizations.cpp globalOptimizations.cpp -o $(LLVMCODE)
 
 run: $(LLVMCODE)
 	./$(LLVMCODE) $(IN) > $(OUT)
