@@ -1,17 +1,19 @@
 #include<stdio.h>
 
-extern int func(int);
+int func(int);
 
-void print(int n){
-    printf("%d\n", n);
-}
 int read(){
-    int n;
-    scanf("%d",&n);
-    return(n);
+    int x;
+    scanf("%d", &x);
+    return x;
 }
+
+void print(int x){
+    printf("%d\n", x);
+}
+
 int main(){
-    int n = func(20);
-    printf("Returned value: %d\n", n);
+    int i = func(5);
+    printf("In main printing return value of test: %d\n", i);
     return 0;
 }

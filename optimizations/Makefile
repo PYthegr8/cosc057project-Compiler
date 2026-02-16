@@ -13,4 +13,5 @@ clean:
 	rm -rf $(LLVMCODE)
 	rm -rf *.o
 	rm -rf *.out
+	rm -rf *.txt
 	rm -rf $(OUT)

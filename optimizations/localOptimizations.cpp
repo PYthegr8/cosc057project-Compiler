@@ -8,6 +8,7 @@
  */
 
 #include <vector>
+#include <unordered_map>
 #include <llvm-c/Core.h>
 
 /*
@@ -20,6 +21,7 @@ static bool isSideEffect(LLVMValueRef I) {
   if (op == LLVMStore) return true;
   if (op == LLVMCall) return true;
   if (op == LLVMAlloca) return true;
+  if (op == LLVMLoad) return true;
   if (LLVMIsATerminatorInst(I)) return true;
 
   return false;
@@ -72,6 +74,74 @@ bool constantFolding(LLVMValueRef function) {
 }
 
 /*
+ * Common Subexpression Elimination
+ * Eliminates duplicate loads and duplicate add sub mul instructions within a basic block.
+ * A load can be reused if no store writes to the same address in between.
+ */
+bool commonSubexpressionElimination(LLVMValueRef function) {
+  bool changed = false;
+
+  for (LLVMBasicBlockRef basicBlock = LLVMGetFirstBasicBlock(function);
+       basicBlock != nullptr;
+       basicBlock = LLVMGetNextBasicBlock(basicBlock)) {
+
+    std::unordered_map<LLVMValueRef, LLVMValueRef> lastLoad;
+    std::vector<LLVMValueRef> seenExprs;
+
+    for (LLVMValueRef instruction = LLVMGetFirstInstruction(basicBlock);
+         instruction != nullptr;
+         instruction = LLVMGetNextInstruction(instruction)) {
+
+      LLVMOpcode op = LLVMGetInstructionOpcode(instruction);
+
+      // Store kills previous loads from that same address
+      if (op == LLVMStore) {
+        LLVMValueRef storePtr = LLVMGetOperand(instruction, 1);
+        lastLoad.erase(storePtr);
+        continue;
+      }
+
+      // Reuse repeated loads from the same address
+      if (op == LLVMLoad) {
+        LLVMValueRef loadPtr = LLVMGetOperand(instruction, 0);
+
+        auto it = lastLoad.find(loadPtr);
+        if (it != lastLoad.end()) {
+          LLVMReplaceAllUsesWith(instruction, it->second);
+          changed = true;
+        } else {
+          lastLoad[loadPtr] = instruction;
+        }
+        continue;
+      }
+
+      // Reuse repeated arithmetic expressions
+      if (!(op == LLVMAdd || op == LLVMSub || op == LLVMMul))
+        continue;
+
+      LLVMValueRef operand0 = LLVMGetOperand(instruction, 0);
+      LLVMValueRef operand1 = LLVMGetOperand(instruction, 1);
+
+      for (LLVMValueRef prev : seenExprs) {
+        if (LLVMGetInstructionOpcode(prev) != op) continue;
+
+        if (LLVMGetOperand(prev, 0) == operand0 &&
+            LLVMGetOperand(prev, 1) == operand1) {
+          LLVMReplaceAllUsesWith(instruction, prev);
+          changed = true;
+          break;
+        }
+      }
+
+      seenExprs.push_back(instruction);
+    }
+  }
+
+  return changed;
+}
+
+
+/*
  * Dead Code Elimination
  * Removes instructions that have no uses and no side effects.
  */
@@ -118,6 +188,7 @@ bool runLocalOptimizations(LLVMValueRef function) {
   bool changed = false;
 
   changed |= constantFolding(function);
+  changed |= commonSubexpressionElimination(function);
   changed |= deadCodeElimination(function);
 
   return changed;
