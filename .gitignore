@@ -4,16 +4,16 @@
 a.out
 
 # lex/yacc generated files
-lex.yy.c
+parsing/lex.yy.c
 y.tab.c
 y.tab.h
-parsing.tab.c
-parsing.tab.h
+parsing/parsing.tab.c
+parsing/parsing.tab.h
 *.output
 
 # executables
 minic
-parser
+parsing/parser
 compiler
 
 # editor junk

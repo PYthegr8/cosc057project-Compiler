@@ -1,4 +1,4 @@
-parser: parsing.y parse.l
+parser: parsing.y parsing/parse.l
 	bison -d parsing.y
 	flex parse.l
 	g++ -Wall -Wextra -g -o parser parsing.tab.c lex.yy.c ast.c semantic.cpp -lfl
