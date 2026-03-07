@@ -9,9 +9,9 @@
 #include <cstring>
 
 #include "ast.h"
-#include "semantic.h"
-#include "preprocessor.h"
-#include "ir_builder.h"
+#include "parsing/semantic.h"
+#include "parsing/preprocessor.h"
+#include "llvm_builder/ir_builder.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
