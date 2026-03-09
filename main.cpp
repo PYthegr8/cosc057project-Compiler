@@ -16,6 +16,8 @@
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
 
+#include "../../../../../usr/include/stdio.h"
+
 extern FILE *yyin;
 extern int yyparse(void);
 extern int yylex_destroy(void);
@@ -44,6 +46,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    printf("File parsing started\n");
+
     // Run parser
     if (yyparse() != 0 || root == NULL) {
         printf("Parsing failed.\n");
@@ -51,12 +55,15 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    printf("Parsing successful\n");
     // Run semantic analysis
-    if (!runSemanticAnalysis(root)) {
+    if (SemanticAnalysis(root) != 0) {
         printf("Semantic analysis failed.\n");
         fclose(yyin);
         return 1;
     }
+
+    printf("Semantic analysis successful\n");
 
     // Run variable renaming pass
     RenameVariablesUnique(root);
@@ -89,8 +96,8 @@ int main(int argc, char **argv) {
     LLVMDisposeModule(module);
     LLVMShutdown();
     freeNode(root);
+    if (yyin) fclose(yyin);
     yylex_destroy();
-    fclose(yyin);
 
     printf("Compilation successful. Output written to output.ll\n");
     return 0;

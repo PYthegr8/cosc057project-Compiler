@@ -102,6 +102,7 @@ int yyerror(const char *s){
 	return 0;
 }
 
+/*
 int main(int argc, char* argv[]){
 		if (argc == 2){
 			yyin = fopen(argv[1], "r");
@@ -123,3 +124,4 @@ int main(int argc, char* argv[]){
 		yylex_destroy();
 		return 0;
 }
+*/
