@@ -1,7 +1,7 @@
 /*
  * File Name: register_allocator.cpp
  * Description: Implementation of register allocation using linear-scan algorithm
- * Author: Student
+ * Author: Papa Yaw Owusu Nti
  */
 
 #include "register_allocator.h"

@@ -31,7 +31,7 @@ parsing/lex.yy.c: parsing/parse.l
 	flex -o parsing/lex.yy.c parsing/parse.l
 
 $(LLVMCODE): parsing/parsing.tab.c parsing/lex.yy.c $(COMPILER_SRC)
-	clang++ -g $(INCLUDES) $(LLVMFLAGS) $(COMPILER_SRC) -o $(LLVMCODE)
+	clang++ -g $(INCLUDES) $(LLVMFLAGS) $(COMPILER_SRC) -Lcompiler_backend -lregisterallocator -o $(LLVMCODE)
 
 $(OPTCODE): $(OPT_SRC)
 	clang++ -g `llvm-config-17 --cxxflags --ldflags --libs core irreader support` \

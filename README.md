@@ -4,7 +4,9 @@ This project builds a compiler pipeline:
 2. Semantic analysis
 3. Variable renaming (unique names)
 4. LLVM IR Builder (writes `output.ll`)
-5. Optimizer (reads `output.ll`, writes optimized IR to `output_opt.ll`)
+5. Register Allocation (linear-scan algorithm)
+6. Assembly Code Generation (writes `output.s`)
+7. Optimizer (reads `output.ll`, writes optimized IR to `output_opt.ll`)
 
 The builder tests are C files (p1.c, p2.c, …). They follow the restricted “miniC” rules used by our grammar.
 
@@ -29,7 +31,7 @@ Or build both by running:
 make
 ```
 
-## Run the compiler (produce LLVM IR)
+## Run the compiler
 
 Set the input file in the Makefile (variable `IN`) or pass it directly:
 
@@ -45,7 +47,8 @@ This runs:
 
 Output:
 
-* `output.ll`
+* `output.ll` - LLVM Intermediate Representation
+* `output.s` - x86-32 Assembly code (after register allocation)
 
 ## Run the optimizer (optional)
 

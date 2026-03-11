@@ -1,7 +1,7 @@
 /*
  * File Name: register_allocator.h
  * Description: Header file for register allocation using linear-scan algorithm
- * Author: Student
+ * Author: Papa Yaw Owusu Nti
  */
 
 #ifndef REGISTER_ALLOCATOR_H
@@ -45,38 +45,17 @@ typedef std::unordered_map<LLVMValueRef, int> IndexMap;
 typedef std::unordered_map<LLVMValueRef, int> RegisterMap;
 
 /*
- * Compute liveness information for a basic block
- * 
- * Parameters:
- *   bb - The basic block to analyze
- *   inst_index - Output: maps instructions to their index in the block
- *   live_range - Output: maps instructions to their (start, end) liveness range
- *
- * Notes:
- *   - alloca instructions are skipped (not indexed)
- *   - All output maps are cleared at the beginning
+ * Analyze where values are defined and used in a basic block.
+ * Assigns an index to each instruction and tracks which instructions use each value.
+ * Alloca instructions are skipped and not indexed.
  */
 void compute_liveness(LLVMBasicBlockRef bb, 
                       IndexMap& inst_index, 
                       LivenessMap& live_range);
 
 /*
- * Find a candidate value to spill (move to memory)
- * 
- * Parameters:
- *   instr - The instruction that needs a register
- *   reg_map - Current register allocation
- *   inst_index - Instruction indices in the basic block
- *   live_range - Liveness information for all values
- *   sorted_list - List of instructions sorted by some heuristic
- *
- * Returns:
- *   LLVMValueRef of instruction to spill, or NULL if none found
- *
- * Algorithm:
- *   - For each instruction in sorted_list with overlapping liveness
- *   - If it has a register assigned (not -1), return it
- *   - Return NULL if no candidates
+ * Find an instruction that can be spilled to memory when all registers are in use.
+ * Looks for an instruction with overlapping liveness that already has a register assigned.
  */
 LLVMValueRef find_spill(LLVMValueRef instr,
                         RegisterMap& reg_map,
@@ -85,15 +64,8 @@ LLVMValueRef find_spill(LLVMValueRef instr,
                         LivenessMap& live_range);
 
 /*
- * Main register allocation function
- * Performs linear-scan register allocation on all basic blocks in a function
- * 
- * Parameters:
- *   func - The LLVM function to allocate registers for
- *
- * Returns:
- *   RegisterMap with complete allocation (includes all basic blocks)
- *   Maps LLVMValueRef to register id (0-2) or -1 for spilled
+ * Allocate physical registers to all instructions in a function using linear-scan allocation.
+ * Assigns registers from %ebx, %ecx, %edx. Spills values to stack memory when needed.
  */
 RegisterMap allocate_registers(LLVMValueRef func);
 

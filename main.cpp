@@ -12,6 +12,8 @@
 #include "parsing/semantic.h"
 #include "parsing/preprocessor.h"
 #include "llvm_builder/ir_builder.h"
+#include "compiler_backend/register_allocator.h"
+#include "compiler_backend/assembly_gen.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
@@ -92,6 +94,40 @@ int main(int argc, char **argv) {
         LLVMDisposeMessage(error);
     }
 
+    // Perform register allocation for all functions
+    printf("Performing register allocation\n");
+    RegisterMap reg_map;
+    
+    // Process each function in the module
+    for (LLVMValueRef func = LLVMGetFirstFunction(module);
+         func != NULL;
+         func = LLVMGetNextFunction(func)) {
+        
+        // Skip function declarations
+        if (LLVMIsDeclaration(func)) {
+            continue;
+        }
+        
+        // Allocate registers for this function
+        RegisterMap func_reg_map = allocate_registers(func);
+        
+        // Merge into overall register map
+        for (auto& pair : func_reg_map) {
+            reg_map[pair.first] = pair.second;
+        }
+    }
+    printf("Register allocation completed\n");
+
+    // Generate assembly code
+    printf("Generating assembly code...\n");
+    if (generateAssembly(module, reg_map, "output.s") != 0) {
+        printf("Assembly generation failed\n");
+        LLVMDisposeModule(module);
+        fclose(yyin);
+        return 1;
+    }
+    printf("Assembly generation completed. Output written to output.s\n");
+
     // Cleanup
     LLVMDisposeModule(module);
     LLVMShutdown();
@@ -99,6 +135,6 @@ int main(int argc, char **argv) {
     if (yyin) fclose(yyin);
     yylex_destroy();
 
-    printf("Compilation successful. Output written to output.ll\n");
+    printf("Compilation successful. Output written to output.ll and output.s\n");
     return 0;
 }
