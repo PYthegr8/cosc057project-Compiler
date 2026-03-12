@@ -14,11 +14,41 @@
 /*
  * Helper function to get register name from register id
  */
-static const char* get_register_name(int reg_id) {
+static const char* getRegisterName(int reg_id) {
     switch (reg_id) {
         case REG_EBX: return "%ebx";
         case REG_ECX: return "%ecx";
         case REG_EDX: return "%edx";
+        default: return NULL;
+    }
+}
+
+/*
+ * Helper function to get jump instruction from comparison predicate
+ */
+static const char* getJumpName(LLVMIntPredicate pred) {
+    switch (pred) {
+        case LLVMIntSLT: return "jl";
+        case LLVMIntSGT: return "jg";
+        case LLVMIntSLE: return "jle";
+        case LLVMIntSGE: return "jge";
+        case LLVMIntEQ:  return "je";
+        case LLVMIntNE:  return "jne";
+        default: return NULL;
+    }
+}
+
+/*
+ * Helper function to get set instruction from comparison predicate
+ */
+static const char* getSetName(LLVMIntPredicate pred) {
+    switch (pred) {
+        case LLVMIntSLT: return "setl";
+        case LLVMIntSGT: return "setg";
+        case LLVMIntSLE: return "setle";
+        case LLVMIntSGE: return "setge";
+        case LLVMIntEQ:  return "sete";
+        case LLVMIntNE:  return "setne";
         default: return NULL;
     }
 }
@@ -33,7 +63,7 @@ static void emit(FILE* output, const char* instr) {
 /*
  * Helper function to emit an assembly instruction with operands
  */
-static void emit_op(FILE* output, const char* opcode, const char* op1, const char* op2 = NULL) {
+static void emitOp(FILE* output, const char* opcode, const char* op1, const char* op2 = NULL) {
     if (op2) {
         fprintf(output, "\t%s %s, %s\n", opcode, op1, op2);
     } else {
@@ -84,13 +114,13 @@ void printFunctionEnd(FILE* output) {
  */
 void getOffsetMap(LLVMValueRef func, OffsetMap& offset_map, int& localMem) {
     offset_map.clear();
-    localMem = 4;  // Start with 4 bytes (for alignment or something?)
+    localMem = 4;
 
     // Handle function parameters
     int param_count = LLVMCountParams(func);
     for (int i = 0; i < param_count; i++) {
         LLVMValueRef param = LLVMGetParam(func, i);
-        offset_map[param] = 8 + i * 4;  // Parameters at 8(%ebp), 12(%ebp), etc.
+        offset_map[param] = 8 + i * 4;
     }
 
     // Process each basic block
@@ -166,8 +196,8 @@ static void generateReturn(LLVMValueRef instr,
         // Return variable
         if (reg_map.find(ret_val) != reg_map.end() && reg_map[ret_val] != SPILLED) {
             // In register
-            const char* reg_name = get_register_name(reg_map[ret_val]);
-            emit_op(output, "movl", reg_name, "%eax");
+            const char* reg_name = getRegisterName(reg_map[ret_val]);
+            emitOp(output, "movl", reg_name, "%eax");
         } else {
             // In memory
             if (offset_map.find(ret_val) != offset_map.end()) {
@@ -190,7 +220,7 @@ static void generateLoad(LLVMValueRef instr,
 
     if (reg_map.find(instr) != reg_map.end() && reg_map[instr] != SPILLED) {
         // Result goes to register
-        const char* reg_name = get_register_name(reg_map[instr]);
+        const char* reg_name = getRegisterName(reg_map[instr]);
         if (offset_map.find(ptr) != offset_map.end()) {
             int offset = offset_map[ptr];
             fprintf(output, "\tmovl %d(%%ebp), %s\n", offset, reg_name);
@@ -209,7 +239,7 @@ static void generateStore(LLVMValueRef instr,
     LLVMValueRef val = LLVMGetOperand(instr, 0);
     LLVMValueRef ptr = LLVMGetOperand(instr, 1);
 
-    // Skip if storing parameter (handled in getOffsetMap)
+    // Skip if storing parameter
     int param_count = LLVMCountParams(LLVMGetBasicBlockParent(LLVMGetInstructionParent(instr)));
     bool is_param = false;
     for (int i = 0; i < param_count; i++) {
@@ -233,7 +263,7 @@ static void generateStore(LLVMValueRef instr,
             // Store variable
             if (reg_map.find(val) != reg_map.end() && reg_map[val] != SPILLED) {
                 // From register
-                const char* reg_name = get_register_name(reg_map[val]);
+                const char* reg_name = getRegisterName(reg_map[val]);
                 fprintf(output, "\tmovl %s, %d(%%ebp)\n", reg_name, offset);
             } else {
                 // From memory via %eax
@@ -256,12 +286,14 @@ static void generateCall(LLVMValueRef instr,
                         FILE* output) {
 
     // Save caller-saved registers
-    emit_op(output, "pushl", "%ecx");
-    emit_op(output, "pushl", "%edx");
+    emitOp(output, "pushl", "%ecx");
+    emitOp(output, "pushl", "%edx");
 
-    // Handle parameters if any
     int num_operands = LLVMGetNumOperands(instr);
-    if (num_operands > 0) {
+    int arg_count = num_operands - 1;
+
+    // Handle parameter if any
+    if (arg_count == 1) {
         LLVMValueRef param = LLVMGetOperand(instr, 0);
 
         if (LLVMIsConstant(param)) {
@@ -269,8 +301,8 @@ static void generateCall(LLVMValueRef instr,
             fprintf(output, "\tpushl $%lld\n", const_val);
         } else {
             if (reg_map.find(param) != reg_map.end() && reg_map[param] != SPILLED) {
-                const char* reg_name = get_register_name(reg_map[param]);
-                emit_op(output, "pushl", reg_name);
+                const char* reg_name = getRegisterName(reg_map[param]);
+                emitOp(output, "pushl", reg_name);
             } else {
                 if (offset_map.find(param) != offset_map.end()) {
                     int offset = offset_map[param];
@@ -280,33 +312,31 @@ static void generateCall(LLVMValueRef instr,
         }
     }
 
-    /* Extract function name from the call operand */
+    // Extract function name from the last operand
     const char* func_name = NULL;
     if (num_operands > 0) {
         LLVMValueRef callee = LLVMGetOperand(instr, num_operands - 1);
-        if (LLVMIsAGlobalValue(callee)) {
-            func_name = LLVMGetValueName(callee);
-        }
+        func_name = LLVMGetValueName(callee);
     }
 
-    if (func_name) {
+    if (func_name && strlen(func_name) > 0) {
         fprintf(output, "\tcall %s\n", func_name);
     }
 
     // Clean up parameter if pushed
-    if (num_operands > 0) {
-        emit_op(output, "addl", "$4", "%esp");
+    if (arg_count == 1) {
+        emitOp(output, "addl", "$4", "%esp");
     }
 
     // Restore registers
-    emit_op(output, "popl", "%edx");
-    emit_op(output, "popl", "%ecx");
+    emitOp(output, "popl", "%edx");
+    emitOp(output, "popl", "%ecx");
 
     // Handle return value if call has result
-    if (!LLVMTypeOf(instr) || LLVMTypeOf(instr) != LLVMVoidType()) {
+    if (LLVMGetTypeKind(LLVMTypeOf(instr)) != LLVMVoidTypeKind) {
         if (reg_map.find(instr) != reg_map.end() && reg_map[instr] != SPILLED) {
-            const char* reg_name = get_register_name(reg_map[instr]);
-            emit_op(output, "movl", "%eax", reg_name);
+            const char* reg_name = getRegisterName(reg_map[instr]);
+            emitOp(output, "movl", "%eax", reg_name);
         } else {
             if (offset_map.find(instr) != offset_map.end()) {
                 int offset = offset_map[instr];
@@ -334,17 +364,22 @@ static void generateBranch(LLVMValueRef instr,
             fprintf(output, "\tjmp %s\n", bb_labels[target].c_str());
         }
     } else {
-        /* Conditional branch */
+        // Conditional branch
         LLVMValueRef cond = LLVMGetOperand(instr, 0);
         LLVMBasicBlockRef true_bb = (LLVMBasicBlockRef)LLVMGetOperand(instr, 2);
         LLVMBasicBlockRef false_bb = (LLVMBasicBlockRef)LLVMGetOperand(instr, 1);
 
-        /* Jump to true branch if condition is less than zero */
-        if (bb_labels.find(true_bb) != bb_labels.end() &&
-            bb_labels.find(false_bb) != bb_labels.end()) {
+        if (LLVMGetInstructionOpcode(cond) == LLVMICmp) {
+            LLVMIntPredicate pred = LLVMGetICmpPredicate(cond);
+            const char* jump_name = getJumpName(pred);
 
-            fprintf(output, "\tjl %s\n", bb_labels[true_bb].c_str());
-            fprintf(output, "\tjmp %s\n", bb_labels[false_bb].c_str());
+            if (jump_name &&
+                bb_labels.find(true_bb) != bb_labels.end() &&
+                bb_labels.find(false_bb) != bb_labels.end()) {
+
+                fprintf(output, "\t%s %s\n", jump_name, bb_labels[true_bb].c_str());
+                fprintf(output, "\tjmp %s\n", bb_labels[false_bb].c_str());
+            }
         }
     }
 }
@@ -372,7 +407,7 @@ static void generateArithmetic(LLVMValueRef instr,
     // Determine destination register
     const char* dest_reg = "%eax";
     if (reg_map.find(instr) != reg_map.end() && reg_map[instr] != SPILLED) {
-        dest_reg = get_register_name(reg_map[instr]);
+        dest_reg = getRegisterName(reg_map[instr]);
     }
 
     // Load first operand
@@ -381,9 +416,9 @@ static void generateArithmetic(LLVMValueRef instr,
         fprintf(output, "\tmovl $%lld, %s\n", const_val, dest_reg);
     } else {
         if (reg_map.find(op1) != reg_map.end() && reg_map[op1] != SPILLED) {
-            const char* src_reg = get_register_name(reg_map[op1]);
+            const char* src_reg = getRegisterName(reg_map[op1]);
             if (strcmp(src_reg, dest_reg) != 0) {
-                emit_op(output, "movl", src_reg, dest_reg);
+                emitOp(output, "movl", src_reg, dest_reg);
             }
         } else {
             if (offset_map.find(op1) != offset_map.end()) {
@@ -399,7 +434,7 @@ static void generateArithmetic(LLVMValueRef instr,
         fprintf(output, "\t%s $%lld, %s\n", op_name, const_val, dest_reg);
     } else {
         if (reg_map.find(op2) != reg_map.end() && reg_map[op2] != SPILLED) {
-            const char* src_reg = get_register_name(reg_map[op2]);
+            const char* src_reg = getRegisterName(reg_map[op2]);
             fprintf(output, "\t%s %s, %s\n", op_name, src_reg, dest_reg);
         } else {
             if (offset_map.find(op2) != offset_map.end()) {
@@ -428,11 +463,15 @@ static void generateCompare(LLVMValueRef instr,
 
     LLVMValueRef op1 = LLVMGetOperand(instr, 0);
     LLVMValueRef op2 = LLVMGetOperand(instr, 1);
+    LLVMIntPredicate pred = LLVMGetICmpPredicate(instr);
+
+    const char* set_name = getSetName(pred);
+    if (!set_name) return;
 
     // Determine destination register
     const char* dest_reg = "%eax";
     if (reg_map.find(instr) != reg_map.end() && reg_map[instr] != SPILLED) {
-        dest_reg = get_register_name(reg_map[instr]);
+        dest_reg = getRegisterName(reg_map[instr]);
     }
 
     // Load first operand
@@ -441,9 +480,9 @@ static void generateCompare(LLVMValueRef instr,
         fprintf(output, "\tmovl $%lld, %s\n", const_val, dest_reg);
     } else {
         if (reg_map.find(op1) != reg_map.end() && reg_map[op1] != SPILLED) {
-            const char* src_reg = get_register_name(reg_map[op1]);
+            const char* src_reg = getRegisterName(reg_map[op1]);
             if (strcmp(src_reg, dest_reg) != 0) {
-                emit_op(output, "movl", src_reg, dest_reg);
+                emitOp(output, "movl", src_reg, dest_reg);
             }
         } else {
             if (offset_map.find(op1) != offset_map.end()) {
@@ -459,7 +498,7 @@ static void generateCompare(LLVMValueRef instr,
         fprintf(output, "\tcmpl $%lld, %s\n", const_val, dest_reg);
     } else {
         if (reg_map.find(op2) != reg_map.end() && reg_map[op2] != SPILLED) {
-            const char* src_reg = get_register_name(reg_map[op2]);
+            const char* src_reg = getRegisterName(reg_map[op2]);
             fprintf(output, "\tcmpl %s, %s\n", src_reg, dest_reg);
         } else {
             if (offset_map.find(op2) != offset_map.end()) {
@@ -469,13 +508,11 @@ static void generateCompare(LLVMValueRef instr,
         }
     }
 
-    /* Set comparison result using setl (less than) instruction */
-    emit_op(output, "setl", "%al");
-    if (strcmp(dest_reg, "%eax") != 0) {
-        emit_op(output, "movzbl", "%al", dest_reg);
-    }
+    // Set comparison result
+    fprintf(output, "\t%s %%al\n", set_name);
+    fprintf(output, "\tmovzbl %%al, %s\n", dest_reg);
 
-    /* Store result if it goes to memory */
+    // Store result if it goes to memory
     if (reg_map.find(instr) == reg_map.end() || reg_map[instr] == SPILLED) {
         if (offset_map.find(instr) != offset_map.end()) {
             int offset = offset_map[instr];
@@ -514,10 +551,10 @@ int generateAssembly(LLVMModuleRef module,
             getOffsetMap(func, offset_map, localMem);
 
             // Function prologue
-            emit_op(output, "pushl", "%ebp");
-            emit_op(output, "movl", "%esp", "%ebp");
+            emitOp(output, "pushl", "%ebp");
+            emitOp(output, "movl", "%esp", "%ebp");
             fprintf(output, "\tsubl $%d, %%esp\n", localMem);
-            emit_op(output, "pushl", "%ebx");
+            emitOp(output, "pushl", "%ebx");
 
             // Process each basic block
             for (LLVMBasicBlockRef bb = LLVMGetFirstBasicBlock(func);
@@ -539,7 +576,7 @@ int generateAssembly(LLVMModuleRef module,
                     switch (opcode) {
                         case LLVMRet:
                             generateReturn(instr, reg_map, offset_map, output);
-                            emit_op(output, "popl", "%ebx");
+                            emitOp(output, "popl", "%ebx");
                             printFunctionEnd(output);
                             break;
                         case LLVMLoad:

@@ -7,9 +7,8 @@ OUT_OPT = output_opt.ll
 
 LLVMFLAGS = `llvm-config-17 --cxxflags --ldflags --libs core analysis`
 
-# include paths so headers like ast.h can be found from any folder
 INCLUDES = -I. -Iparsing -Illvm_builder -Ifrontend -Isemantic_analysis -Ioptimizations
-# sources
+
 COMPILER_SRC = \
 	main.cpp \
 	ast.c \
@@ -18,19 +17,24 @@ COMPILER_SRC = \
 	$(wildcard */semantic.cpp) \
 	$(wildcard */preprocessor.cpp) \
 	$(wildcard */ir_builder.cpp)
+
 OPT_SRC = \
 	optimizations/runOptimizations.cpp \
 	optimizations/localOptimizations.cpp \
 	optimizations/globalOptimizations.cpp
 
-# regenerate parser outputs
+BACKEND_LIB = compiler_backend/libregisterallocator.a
+
+$(BACKEND_LIB):
+	$(MAKE) -C compiler_backend
+
 parsing/parsing.tab.c parsing/parsing.tab.h: parsing/parsing.y
 	bison -d -o parsing/parsing.tab.c parsing/parsing.y
 
 parsing/lex.yy.c: parsing/parse.l
 	flex -o parsing/lex.yy.c parsing/parse.l
 
-$(LLVMCODE): parsing/parsing.tab.c parsing/lex.yy.c $(COMPILER_SRC)
+$(LLVMCODE): parsing/parsing.tab.c parsing/lex.yy.c $(COMPILER_SRC) $(BACKEND_LIB)
 	clang++ -g $(INCLUDES) $(LLVMFLAGS) $(COMPILER_SRC) -Lcompiler_backend -lregisterallocator -o $(LLVMCODE)
 
 $(OPTCODE): $(OPT_SRC)
@@ -44,6 +48,7 @@ opt: $(OPTCODE)
 	./$(OPTCODE) $(OUT) > $(OUT_OPT)
 
 clean:
+	$(MAKE) -C compiler_backend clean
 	rm -rf $(LLVMCODE)
 	rm -rf $(OPTCODE)
 	rm -rf *.o
