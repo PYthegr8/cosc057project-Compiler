@@ -1,8 +1,9 @@
 /*
-* runOptimizations.cpp
+* File Name: runOptimizations.cpp
  *
- * Loads an LLVM IR file, runs optimizations on each function,
+ * Description: Loads an LLVM IR file, runs optimizations on each function,
  * and prints the optimized IR.
+ * Author: Papa Yaw Owusu Nti
  */
 
 #include <cstdio>

@@ -179,7 +179,7 @@ output.s
 ### Step 2 — Build executable
 
 ```bash
-gcc -m32 output.s compiler_backend/assembly_gen_tests/main.c run.c -o max_n
+gcc -m32 output.s compiler_backend/assembly_gen_tests/main.c -o max_n
 ```
 
 ### Step 3 — Run
@@ -203,7 +203,7 @@ In main printing return value of test: 9
 # Some Notes
 
 1. The file `run.c` provides functions used by generated programs:
-
+but it doesn't have a main function. 
 ```
 int read()
 void print(int)

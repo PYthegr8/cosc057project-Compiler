@@ -1,11 +1,12 @@
 /*
- * localOptimizations.cpp
+ * File Name: localOptimizations.cpp
  *
- * Implements local optimizations on LLVM IR functions.
+ * Description: Implements local optimizations on LLVM IR functions.
  * Passes in this file:
  *  1) Constant Folding for integer add sub mul with constant operands
  *  2) Dead Code Elimination for unused non side effect instructions
  *  3) Common Subexpression Elimination for duplicate instructions
+ *  Author: Papa Yaw Owusu Nti
  */
 
 #include <vector>

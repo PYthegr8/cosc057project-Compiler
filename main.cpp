@@ -17,8 +17,7 @@
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
-
-#include "../../../../../usr/include/stdio.h"
+#include <stdio.h>
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -32,7 +31,6 @@ static void printUsage() {
     printf("Usage: ./compiler <input_file>\n");
 }
 
-/* Entry point */
 int main(int argc, char **argv) {
 
     if (argc != 2) {
@@ -58,6 +56,7 @@ int main(int argc, char **argv) {
     }
 
     printf("Parsing successful\n");
+
     // Run semantic analysis
     if (SemanticAnalysis(root) != 0) {
         printf("Semantic analysis failed.\n");

@@ -1,9 +1,10 @@
 /*
- * globalOptimizations.cpp
+ * File Name: globalOptimizations.cpp
  *
- * Implements global constant propagation using reaching store instructions.
+ * Description: Implements global constant propagation using reaching store instructions.
  * Tracks stores with GEN/KILL/IN/OUT per basic block, then replaces loads when
  * all reaching stores write the same constant to the same address.
+ * Author: Papa Yaw Owusu Nti
  */
 
 #include <vector>
